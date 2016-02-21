@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 from lxml import etree
-from lxml.html import parse
+from lxml import html
 import json
 import requests
 import os
@@ -64,10 +64,15 @@ class StateMachine:
         self._download = download
         self._url = None
 
-    def catalog(self):
-        stream = io.StringIO()
-        pprint.pprint(self._d, stream)
-        return stream.getvalue()
+    def catalog(self, mode="json"):
+        if mode == "python":
+            stream = io.StringIO()
+            pprint.pprint(self._d, stream)
+            return stream.getvalue()
+        elif mode == "json":
+            return json.dumps(self._d)
+        else:
+            raise NotImplementedError("unknown mode '{}'".format(mode))
 
     def set_url(self, url):
         self._url = url
@@ -81,7 +86,7 @@ class StateMachine:
     def handle_element(self, elem: etree.Element):
         if elem.tag == "ol":
             self.handle_ol(elem)
-        if elem.tag == "li":
+        elif elem.tag == "li":
             self.handle_li(elem)
         elif elem.tag == "img":
             self.handle_img(elem)
@@ -107,10 +112,9 @@ class StateMachine:
     def handle_li(self, li: etree.Element):
         if self._depth == 1:
             self._current_question.text = self.parse_text(li.text)
-            self.parse(li)
         elif self._depth == 2:
-            self.parse(li)
             self._current_question.answers.append(self.parse_text(li.text))
+        self.parse(li)
 
     def handle_img(self, img: etree.Element):
         if self._depth < 1:
@@ -125,9 +129,9 @@ class StateMachine:
                 with open(img.target, "wb") as out_file:
                     out_file.write(req.content)
             else:
-                print("Error {} while accessing {}".format(req.status_code,
+                log2("Error {} while accessing {}".format(req.status_code,
                                                           img.src),
-                      file=sys.stderr)
+                     file=sys.stderr)
         self._current_question.resources.append(img)
 
     def handle_other(self, other: etree.Element):
@@ -146,6 +150,8 @@ def main():
                         default=sys.stdout)
     parser.add_argument("-d", "--download", action="store_true",
                         default=False, help="download images")
+    parser.add_argument("-m", "--mode", action="store",
+                        default="json", help="output format (python/json)")
 
     args = parser.parse_args()
 
@@ -168,11 +174,11 @@ def main():
         if req.status_code != 200:
             log2("Error processing {}".format(url))
         else:
-            tree = parse(io.BytesIO(req.content))
+            tree = html.parse(io.BytesIO(req.content))
             sm.set_url(url)
             sm.parse(tree.getroot())
         
-    args.output.write(sm.catalog())
+    args.output.write(sm.catalog(mode=args.mode))
 
 if __name__ == "__main__":
     main()

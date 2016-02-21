@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 from lxml import etree
 from lxml import html
@@ -21,7 +21,7 @@ def log2(msg: str):
 
 class Question:
     def __init__(self, number: int):
-        self.number = number
+        self.number = int(number)
         self.text = ""
         self.resources = []
         self.answers = []
@@ -30,6 +30,7 @@ class Question:
         return {"type": "question", "number": self.number, "text": self.text,
                 "resources": list(map(lambda x: x.dictify(), self.resources)),
                 "answers": self.answers}
+        
 
     def __str__(self):
         return str(self.dictify())
@@ -70,7 +71,7 @@ class StateMachine:
             pprint.pprint(self._d, stream)
             return stream.getvalue()
         elif mode == "json":
-            return json.dumps(self._d)
+            return json.dumps(self._d, sort_keys=True, indent=2)
         else:
             raise NotImplementedError("unknown mode '{}'".format(mode))
 
@@ -95,7 +96,7 @@ class StateMachine:
 
     def handle_ol(self, ol: etree.Element):
         self._depth += 1
-        n = ol.get("start")
+        n = int(ol.get("start"))
 
         if self._depth == 1:
             # this is a new question
@@ -105,7 +106,7 @@ class StateMachine:
 
         if self._depth == 1:
             dict_ = self._current_question.dictify()
-            self._d[self._current_question.number] = dict_
+            self._d[dict_["number"]] = dict_
 
         self._depth -= 1
 
@@ -155,9 +156,6 @@ def main():
 
     args = parser.parse_args()
 
-    def log(msg: str):
-        print(msg, file=args.output)
-
     sm = StateMachine(download=args.download)
 
     urls = ["https://www.elwis.de/Freizeitschifffahrt/fuehrerscheininformationen/Fragenkatalog-See/Basisfragen/index.html",
@@ -177,8 +175,8 @@ def main():
             tree = html.parse(io.BytesIO(req.content))
             sm.set_url(url)
             sm.parse(tree.getroot())
-        
-    args.output.write(sm.catalog(mode=args.mode))
+    catalog = sm.catalog(mode=args.mode)
+    args.output.write(catalog)
 
 if __name__ == "__main__":
     main()

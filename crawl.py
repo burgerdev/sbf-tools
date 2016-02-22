@@ -146,7 +146,6 @@ def main():
     import argparse
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("file", nargs="+", type=argparse.FileType('r'))
     parser.add_argument("-o", "--output", type=argparse.FileType('w'),
                         default=sys.stdout)
     parser.add_argument("-d", "--download", action="store_true",
@@ -161,11 +160,6 @@ def main():
     urls = ["https://www.elwis.de/Freizeitschifffahrt/fuehrerscheininformationen/Fragenkatalog-See/Basisfragen/index.html",
             "https://www.elwis.de/Freizeitschifffahrt/fuehrerscheininformationen/Fragenkatalog-See/See/index.html"]
     
-#    for file in args.file:
-#        log2("Processing {}".format(file.name))
-#        tree = parse(file)
-#        sm.parse(tree.getroot())
-
     for url in urls:
         log2("Processing {}".format(url))
         req = requests.get(url)

@@ -6,6 +6,7 @@ import random
 
 
 from falcon import HTTPInvalidParam
+from falcon import HTTPNotFound
 
 
 class _Catalog:
@@ -54,6 +55,8 @@ def rand():
 @hug.get("/site", versions=1, output=hug.output_format.html)
 def site():
     site = _get_site()
+    if site is None:
+        raise HTTPNotFound()
     return site.content
 
 

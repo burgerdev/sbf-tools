@@ -15,11 +15,11 @@ function newStyle(elem, style) {
 }
 
 function makeRed(elem) {
-		newStyle(elem, "color:rgb(255,0,0)");
+		newStyle(elem, "color:rgb(180,0,0)");
 }
 
 function makeGreen(elem) {
-		newStyle(elem, "color:rgb(0,255,0)");
+		newStyle(elem, "color:rgb(0,180,0)");
 }
 
 function makeBlack(elem) {
@@ -45,7 +45,6 @@ function next() {
 	for (i = 0; i < ids.length; i++) {
         makeBlack(ids[i]);
     }
-    //$.getJSON( "http://localhost:8000/v1/random", apply);
     $.getJSON( "random", apply);
 }
 
@@ -57,14 +56,14 @@ function apply(q) {
 	}
 
 	var question = [];
-	question.push("<p>" + q["text"] + "</p>" );
+	question.push("<p>" + q["number"] + ". " + q["text"] + "</p>" );
 
 	var res = q["resources"];
 	for (i = 0; i < res.length; i++) {
 		question.push('<img src="' + res[i]["remote_addr"] + '" /><br />');
 	}
 
-    question.push("<!-- " + perm + " -->");
+    question.push("<!-- Permutation: " + perm + " -->");
 
 	$('#q').html(question.join(""));
 }

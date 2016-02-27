@@ -17,4 +17,9 @@ pip3 install --user hug
 
 # Usage
 
-`TODO`
+Check the script before running it. No guarantees - see license!
+
+```bash
+DATA="<your-data-dir>"
+python3 crawler/crawl.py -o "$DATA" -d 
+./run.sh "$DATA"

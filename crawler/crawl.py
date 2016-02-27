@@ -39,15 +39,14 @@ class Image:
         self.alt = alt
         self.title = title
         self.basedir = basedir
-        self.adjust_source(src)
 
-    def adjust_source(self, relative_src):
-        self.src = urljoin(self.base, relative_src)
+        self.src = urljoin(self.base, src)
         name = self.src.split("/")[-1]
         if self.basedir is not None:
             self.target = os.path.join(self.basedir, name)
         else:
             self.target = name
+        self.name = name
 
     def dictify(self):
         return {"type": "image", "remote_addr": self.src,
@@ -146,6 +145,7 @@ class StateMachine:
         self.parse(other)
 
     def parse_text(self, text: str):
+        text = str(text).encode('ascii', 'xmlcharrefreplace').decode()
         return text
 
 

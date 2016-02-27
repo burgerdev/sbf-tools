@@ -29,9 +29,9 @@ class _Site:
             return f.read()
         
 
-
-_catalog = None
-_site = None
+#FIXME waiting for data support in hug
+global _catalog
+global _site
 
 
 @hug.get("/questions", versions=1)
@@ -70,15 +70,17 @@ def _get_site():
     return _site
 
 
-def prepare_main():
+if __name__ == "__main__":
     global _site
     global _catalog
     import argparse
 
     parser = argparse.ArgumentParser()
     parser.add_argument("file", type=argparse.FileType('r'))
-    parser.add_argument("-s", "--site", type=str,
-                        default=None)
+    parser.add_argument("-s", "--site", type=str, default=None,
+                        help="index.html to serve on '/v1/site', if needed")
+    parser.add_argument("-p", "--port", type=int, default=8000,
+                        help="port on which SBF-API will be served")
 
     args = parser.parse_args()
 
@@ -86,6 +88,4 @@ def prepare_main():
     if args.site is not None:
         _site = _Site(args.site)
 
-if __name__ == "__main__":
-    prepare_main()
-    __hug__.serve()
+    __hug__.serve(port=args.port)

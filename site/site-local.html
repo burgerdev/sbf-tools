@@ -1,0 +1,129 @@
+<html>
+
+<head>
+<title>Sportbootf&uuml;hrerschein</title>
+<script src="http://localhost:8001/data/jquery.min.js"></script>
+</head>
+<body>
+
+<script>
+
+function newStyle(elem, style) {
+    $(elem).attr({style: style});
+}
+
+function makeRed(elem) {
+		newStyle(elem, "color:rgb(180,0,0)");
+}
+
+function makeGreen(elem) {
+		newStyle(elem, "color:rgb(0,180,0)");
+}
+
+function makeBlack(elem) {
+		newStyle(elem, "color:rgb(0,0,0)");
+}
+
+//var perm = [0, 1, 2, 3];
+var ids = ["#1", "#2", "#3", "#4"];
+
+function solve() {
+	for (i = 0; i < ids.length; i++) {
+        if (perm[i] == 0) {
+	        makeGreen(ids[i]);
+
+        }
+        else {
+	        makeRed(ids[i]);
+        }
+    }
+}
+
+function next() {
+	for (i = 0; i < ids.length; i++) {
+        makeBlack(ids[i]);
+    }
+    $.getJSON( "random", apply);
+}
+
+function apply(q) {
+    perm = shuffle([0, 1, 2, 3]);
+
+	for (i = 0; i < ids.length; i++) { 
+		$(ids[i]).html(q["answers"][perm[i]]);
+	}
+
+	var question = [];
+	question.push("<p>" + q["number"] + ". " + q["text"] + "</p>" );
+
+	var res = q["resources"];
+	for (i = 0; i < res.length; i++) {
+		question.push('<img src="http://localhost:8001/' + res[i]["local_addr"] + '" /><br />');
+	}
+
+    question.push("<!-- Permutation: " + perm + " -->");
+
+	$('#q').html(question.join(""));
+}
+
+// from http://stackoverflow.com/a/2450976
+function shuffle(array) {
+  var currentIndex = array.length, temporaryValue, randomIndex;
+
+  // While there remain elements to shuffle...
+  while (0 !== currentIndex) {
+
+    // Pick a remaining element...
+    randomIndex = Math.floor(Math.random() * currentIndex);
+    currentIndex -= 1;
+
+    // And swap it with the current element.
+    temporaryValue = array[currentIndex];
+    array[currentIndex] = array[randomIndex];
+    array[randomIndex] = temporaryValue;
+  }
+
+  return array;
+}
+</script>
+
+<div id="q">
+Question 
+</div>
+<hr />
+<ul>
+<p>
+<li>
+<button class="link" id=1 onclick="solve()">
+Answer
+</button>
+</li>
+</p>
+<p>
+<li>
+<button class="link" id=2 onclick="solve()">
+Answer
+</button>
+</li>
+</p>
+<p>
+<li>
+<button class="link" id=3 onclick="solve()">
+Answer
+</button>
+</li>
+</p>
+<p>
+<li>
+<button class="link" id=4 onclick="solve()">
+Answer
+</button>
+</li>
+</p>
+</ul>
+<hr />
+<button id="next" onclick="next()">
+Next
+</button>
+</body>
+</html>

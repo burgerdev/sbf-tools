@@ -12,9 +12,6 @@ import pprint
 from urllib.parse import urljoin
 
 
-local = "data"
-
-
 def log2(msg: str):
     print(msg, file=sys.stderr)
 
@@ -37,16 +34,20 @@ class Question:
 
 
 class Image:
-    def __init__(self, base, src, alt="", title=""):
+    def __init__(self, base, src, alt="", title="", basedir=None):
         self.base = base
         self.alt = alt
         self.title = title
+        self.basedir = basedir
         self.adjust_source(src)
 
     def adjust_source(self, relative_src):
         self.src = urljoin(self.base, relative_src)
         name = self.src.split("/")[-1]
-        self.target = os.path.join(local, name)
+        if self.basedir is not None:
+            self.target = os.path.join(self.basedir, name)
+        else:
+            self.target = name
 
     def dictify(self):
         return {"type": "image", "remote_addr": self.src,
@@ -58,12 +59,18 @@ class Image:
 
 class StateMachine:
 
-    def __init__(self, download=False):
+    def __init__(self, basedir=None, download=False):
         self._d = dict()
         self._current_question = None
         self._depth = 0
         self._download = download
         self._url = None
+        self._basedir = basedir if basedir is not None else "."
+
+    def store_catalog(self, mode="json"):
+        catalog = self.catalog(mode=mode)
+        with open(os.path.join(self._basedir, "catalog.json"), "w") as f:
+            f.write(catalog)
 
     def catalog(self, mode="json"):
         if mode == "python":
@@ -123,7 +130,7 @@ class StateMachine:
             return
 
         img = Image(self._url, img.get("src"), alt=img.get("alt"),
-                    title=img.get("title"))
+                    title=img.get("title"), basedir=self._basedir)
         if self._download:
             req = requests.get(img.src)
             if req.status_code == 200:
@@ -146,8 +153,9 @@ def main():
     import argparse
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("-o", "--output", type=argparse.FileType('w'),
-                        default=sys.stdout)
+    parser.add_argument("-o", "--outputdir", action="store",
+                        default="data", 
+                        help="directory to store crawled questions")
     parser.add_argument("-d", "--download", action="store_true",
                         default=False, help="download images")
     parser.add_argument("-m", "--mode", action="store",
@@ -155,7 +163,7 @@ def main():
 
     args = parser.parse_args()
 
-    sm = StateMachine(download=args.download)
+    sm = StateMachine(download=args.download, basedir=args.outputdir)
 
     urls = ["https://www.elwis.de/Freizeitschifffahrt/fuehrerscheininformationen/Fragenkatalog-See/Basisfragen/index.html",
             "https://www.elwis.de/Freizeitschifffahrt/fuehrerscheininformationen/Fragenkatalog-See/See/index.html"]
@@ -169,8 +177,7 @@ def main():
             tree = html.parse(io.BytesIO(req.content))
             sm.set_url(url)
             sm.parse(tree.getroot())
-    catalog = sm.catalog(mode=args.mode)
-    args.output.write(catalog)
+    sm.store_catalog(mode=args.mode)
 
 if __name__ == "__main__":
     main()

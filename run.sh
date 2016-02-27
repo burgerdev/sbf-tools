@@ -41,7 +41,7 @@ python3 "$APPDIR/server/server.py" -s "$APPDIR/site/site-local.html" "$APPDIR/da
 
 echo "started REST API server at $PORTA [$!]"
 
-python -m SimpleHTTPServer $PORTB >http.out 2>http.err &
+python3 -m http.server $PORTB >http.out 2>http.err &
 
 echo "started HTTP server (for images) at $PORTB [$!]"
 

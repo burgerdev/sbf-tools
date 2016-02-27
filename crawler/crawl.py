@@ -5,15 +5,14 @@ from lxml import html
 import json
 import requests
 import os
-import sys
 import io
 import pprint
 
 from urllib.parse import urljoin
 
 
-def log2(msg: str):
-    print(msg, file=sys.stderr)
+import logging
+LOGGER = logging.getLogger(__name__)
 
 
 class Question:
@@ -27,7 +26,6 @@ class Question:
         return {"type": "question", "number": self.number, "text": self.text,
                 "resources": list(map(lambda x: x.dictify(), self.resources)),
                 "answers": self.answers}
-        
 
     def __str__(self):
         return str(self.dictify())
@@ -118,9 +116,9 @@ class StateMachine:
 
     def handle_li(self, li: etree.Element):
         if self._depth == 1:
-            self._current_question.text = self.parse_text(li.text)
+            self._current_question.text = self.get_text(li)
         elif self._depth == 2:
-            self._current_question.answers.append(self.parse_text(li.text))
+            self._current_question.answers.append(self.get_text(li))
         self.parse(li)
 
     def handle_img(self, img: etree.Element):
@@ -136,13 +134,18 @@ class StateMachine:
                 with open(img.target, "wb") as out_file:
                     out_file.write(req.content)
             else:
-                log2("Error {} while accessing {}".format(req.status_code,
-                                                          img.src),
-                     file=sys.stderr)
+                LOGGER.error("Error {} while accessing {}".format(
+                    req.status_code, img.src))
         self._current_question.resources.append(img)
 
     def handle_other(self, other: etree.Element):
         self.parse(other)
+
+    def get_text(self, node: etree.Element, stream: io.StringIO=None):
+        total_text = self.parse_text("".join(node.itertext()))
+        xml_encoded_bytes = total_text.encode('ascii', 'xmlcharrefreplace')
+        xml_encoded_str = xml_encoded_bytes.decode()
+        return xml_encoded_str
 
     def parse_text(self, text: str):
         text = str(text).encode('ascii', 'xmlcharrefreplace').decode()
@@ -151,10 +154,12 @@ class StateMachine:
 
 def main():
     import argparse
+    logging.basicConfig()
+    LOGGER.setLevel(logging.INFO)
 
     parser = argparse.ArgumentParser()
     parser.add_argument("-o", "--outputdir", action="store",
-                        default="data", 
+                        default="data",
                         help="directory to store crawled questions")
     parser.add_argument("-d", "--download", action="store_true",
                         default=False, help="download images")
@@ -167,12 +172,12 @@ def main():
 
     urls = ["https://www.elwis.de/Freizeitschifffahrt/fuehrerscheininformationen/Fragenkatalog-See/Basisfragen/index.html",
             "https://www.elwis.de/Freizeitschifffahrt/fuehrerscheininformationen/Fragenkatalog-See/See/index.html"]
-    
+
     for url in urls:
-        log2("Processing {}".format(url))
+        LOGGER.info("Processing {}".format(url))
         req = requests.get(url)
         if req.status_code != 200:
-            log2("Error processing {}".format(url))
+            LOGGER.error("Error processing {}".format(url))
         else:
             tree = html.parse(io.BytesIO(req.content))
             sm.set_url(url)

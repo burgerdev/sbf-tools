@@ -133,9 +133,9 @@ class StateMachine:
 
     def handle_li(self, li: etree.Element):
         if self._depth == 1:
-            self._current_question.text = self.get_text(li)
+            self._current_question.text = get_text(li)
         elif self._depth == 2:
-            self._current_question.answers.append(self.get_text(li))
+            self._current_question.answers.append(get_text(li))
         self.parse(li)
 
     def handle_img(self, img: etree.Element):
@@ -158,15 +158,33 @@ class StateMachine:
     def handle_other(self, other: etree.Element):
         self.parse(other)
 
-    def get_text(self, node: etree.Element, stream: io.StringIO=None):
-        total_text = self.parse_text("".join(node.itertext()))
-        xml_encoded_bytes = total_text.encode('ascii', 'xmlcharrefreplace')
-        xml_encoded_str = xml_encoded_bytes.decode()
-        return xml_encoded_str
 
-    def parse_text(self, text: str):
-        text = str(text).encode('ascii', 'xmlcharrefreplace').decode()
-        return text
+def get_text(node: etree.Element, stream: io.StringIO=None):
+    """
+    Extract text from this node and all children until an <ol> occurs
+    """
+    if stream is None:
+        start = True
+        stream = io.StringIO()
+    else:
+        start = False
+
+    def to_xml(s: str):
+        s = "" if s is None else s
+        return s.encode('ascii', 'xmlcharrefreplace').decode()
+
+    stream.write(to_xml(node.text))
+    for child in node:
+        if child.tag == "ol":
+            break
+        get_text(child, stream=stream)
+
+    if start:
+        # we are done, return the buffered string
+        return stream.getvalue()
+    else:
+        # we are in a child, append our tail to the total string
+        stream.write(to_xml(node.tail))
 
 
 def main():

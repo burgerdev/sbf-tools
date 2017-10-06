@@ -23,6 +23,7 @@ Check the script before running it. No guarantees - see license!
 DATA="<your-data-dir>"
 python3 crawler/crawl.py -o "$DATA" -d 
 ./run.sh "$DATA"
+```
 
 # License
 

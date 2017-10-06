@@ -27,7 +27,7 @@ python3 crawler/crawl.py -o "$DATA" -d
 
 # License
 
-GPLv3, see file `LICENSE`.
+GPLv3, see file [LICENSE](LICENSE).
 
 Auszug aus den Nutzungsbedingungen von [ELWIS](https://elwis.de):
 
